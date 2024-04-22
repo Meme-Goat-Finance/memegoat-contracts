@@ -10,6 +10,8 @@
 (define-constant ERR-NOT-PARTICIPANT (err u7003))
 (define-constant ERR-POOL-NOT-FUNDED (err u8000))
 (define-constant ERR-MAX-DEPOSIT-EXCEEDED (err u8001))
+(define-constant ERR-ALREADY-CLAIMED (err u9002))
+(define-constant ERR-BELOW-MIN-PERIOD (err u9000))
 
 (define-constant ONE_8 u100000000)
 (define-constant ONE_6 u1000000)
@@ -53,7 +55,7 @@
   (begin
     (try! (check-is-owner))
     (asserts! (not (var-get presale-started)) ERR-PRESALE-STARTED)
-    (asserts! (>= no-of-blocks 144)) ;; rough estimate of one day
+    (asserts! (>= no-of-blocks u144) ERR-BELOW-MIN-PERIOD) ;; rough estimate of one day
     (ok (var-set duration no-of-blocks))
   )
 )
@@ -61,9 +63,10 @@
 (define-public (start-presale)
   (begin
     (try! (check-is-owner))
-    (asserts! (is-eq MEMEGOAT-POOL (try! (contract-call? .memegoat-vault get-balance .memegoatstx)))) ERR-POOL-NOT-FUNDED)
+    (asserts! (is-eq MEMEGOAT-POOL (try! (contract-call? .memegoat-vault get-balance .memegoatstx))) ERR-POOL-NOT-FUNDED)
     (var-set presale-started true)
     (ok (var-set release-block (+ (var-get duration) block-height)))
+  )
 )
 
 (define-public (fund-memegoat-launchpad (amount uint))
@@ -71,7 +74,7 @@
     (try! (check-is-owner))
     (asserts! (is-eq amount MEMEGOAT-POOL) ERR-INSUFFICIENT-AMOUNT)
     (asserts! (not (var-get presale-started)) ERR-PRESALE-STARTED)
-    (try! (contract-call? .memegoatstx transfer amount tx-sender .memegoat-vault))
+    (try! (contract-call? .memegoatstx transfer-fixed (decimals-to-fixed amount) tx-sender .memegoat-vault none))
     (ok true)
   )
 )
@@ -121,7 +124,7 @@
     (let
       (
         (stx-pool-balance (var-get stx-pool))
-        (exists (is-some (map-get? users-deposits {user-addr: user-addr})))
+        (exists (is-some (map-get? users-deposits { user-addr: tx-sender })))
         (user-deposit (get-user-deposits tx-sender))
         (participants (var-get no-of-participants))
       )
@@ -144,27 +147,33 @@
       (var-set no-of-participants (+ participants u1))
     )
   )
-  (ok true)
+  (ok (get-user-deposits tx-sender))
+  )
 )
 
 ;; claim memegoat
-(define-public (claim-token))
+(define-public (claim-token)
   (begin
     (asserts! (var-get presale-started) ERR-PRESALE-NOT-STARTED)
     (asserts! (< (var-get release-block) block-height) ERR-PRESALE-NOT-ENDED)
     (let
       (
-          (exists (is-some (map-get? users-deposits {user-addr: user-addr})))
-          (user-allocation (calculate-allocation tx-sender)))
-          (sender tx-sender)
-          (claimed (check-if-claimed sender))
+        (sender tx-sender)
+        (exists (is-some (map-get? users-deposits {user-addr: sender})))
+        (user-allocation (calculate-allocation sender))
+        (claimed (check-if-claimed sender))
       )
 
       (asserts! exists ERR-NOT-PARTICIPANT)
       (asserts! claimed ERR-ALREADY-CLAIMED)
           
       ;; transfer token from vault
-      (as-contract (try! (contract-call? .memegoat-vault transfer-ft .memegoatstx (decimals-to-fixed amount) tx-sender))) 
+      (as-contract (try! (contract-call? .memegoat-vault transfer-ft .memegoatstx (decimals-to-fixed user-allocation) sender)))      
+      
+      ;; set user status to claimed 
+      (map-set user-claimed { user-addr: sender } true)
+    )
+    (ok true)
   )
-  (ok true)
 )
+
