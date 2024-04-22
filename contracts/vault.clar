@@ -14,7 +14,6 @@
 (define-map approved-contracts principal bool)
 (define-map approved-tokens principal bool)
 
-(define-map reserve principal uint)
 (define-data-var paused bool false)
 
 ;; read-only calls
@@ -25,10 +24,6 @@
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
-)
-
-(define-read-only (get-reserve (the-token principal))
-  (default-to u0 (map-get? reserve the-token))
 )
 
 (define-public (get-balance (the-token <ft-trait>))
@@ -67,7 +62,6 @@
         (ok (var-set paused new-paused))
     )
 )
-
 
 ;; priviliged calls
 
@@ -124,6 +118,3 @@
        )
    )
 )
-
-;; contract initialisation
-;; (set-contract-owner .executor-dao)

@@ -47,7 +47,7 @@
 
 ;; define the locker parameters
 (define-data-var stx-fee uint u1000000) ;; small stacks fee to prevent spams
-(define-data-var secondary-fee-token principal .memegoat) ;; in this case memegoat
+(define-data-var secondary-fee-token principal .memegoatstx) ;; in this case memegoat
 (define-data-var secondary-token-fee uint u100000) ;; option memegoat ~ 10,000 memegoat
 
 ;; management calls

@@ -24,6 +24,12 @@ depends_on = [ "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.memegoat-launchpad]
+path = 'contracts/launchpad.clar'
+depends_on = [ "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
 [contracts.memegoat-vault]
 path = 'contracts/vault.clar'
 depends_on = [ "trait-semi-fungible", "trait-sip-010" ]
@@ -49,7 +55,7 @@ depends_on = [ "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
-[contracts.memegoat]
+[contracts.memegoatstx]
 path = 'contracts/test-contracts/token/memegoat.clar'
 depends_on = [ "trait-sip-010" ]
 clarity_version = 2
