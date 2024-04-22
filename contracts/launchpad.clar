@@ -19,7 +19,7 @@
 ;; amount allocated for presale
 (define-constant MEMEGOAT-POOL u1350000000000000)
 
-(define-data-var stx-pool uint 0)
+(define-data-var stx-pool uint u0)
 (define-data-var min-stx-deposit uint u20000000) ;; 20 STX
 (define-data-var max-stx-deposit uint u200000000) ;; 200 STX
 (define-data-var presale-started bool false)
