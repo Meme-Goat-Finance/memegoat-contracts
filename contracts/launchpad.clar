@@ -109,6 +109,10 @@
   (ok MEMEGOAT-POOL)
 )
 
+(define-read-only (get-stx-pool)
+  (ok (var-get stx-pool))
+)
+
 (define-read-only (get-no-of-participants)
   (ok (var-get no-of-participants))
 )
