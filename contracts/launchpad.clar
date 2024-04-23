@@ -105,6 +105,10 @@
   (ok PRESALE-HARDCAP)
 )
 
+(define-read-only (get-softcap)
+  (ok PRESALE-SOFTCAP)
+)
+
 (define-read-only (get-memegoatpool)
   (ok MEMEGOAT-POOL)
 )
