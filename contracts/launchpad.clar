@@ -165,7 +165,7 @@
       )
 
       (asserts! exists ERR-NOT-PARTICIPANT)
-      (asserts! claimed ERR-ALREADY-CLAIMED)
+      (asserts! (not claimed) ERR-ALREADY-CLAIMED)
           
       ;; transfer token from vault
       (as-contract (try! (contract-call? .memegoat-vault transfer-ft .memegoatstx (decimals-to-fixed user-allocation) sender)))      
