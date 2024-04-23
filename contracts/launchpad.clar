@@ -97,6 +97,22 @@
   (/ MEMEGOAT-POOL (var-get stx-pool))
 )
 
+(define-read-only (get-hardcap)
+  (ok PRESALE-HARDCAP)
+)
+
+(define-read-only (get-memegoatpool)
+  (ok MEMEGOAT-POOL)
+)
+
+(define-read-only (get-no-of-participants)
+  (ok (var-get no-of-participants))
+)
+
+(define-read-only (get-release-block)
+  (ok (var-get release-block))
+)
+
 ;; PRIVATE CALLS
 
 (define-private (check-is-owner)
