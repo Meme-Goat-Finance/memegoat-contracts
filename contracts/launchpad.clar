@@ -4,15 +4,16 @@
 
 (define-constant ERR-INSUFFICIENT-AMOUNT (err u5001))
 (define-constant ERR-NOT-AUTHORIZED (err u5009))
+(define-constant ERR-BELOW-MIN-PERIOD (err u6000))
 (define-constant ERR-PRESALE-STARTED (err u7000))
 (define-constant ERR-PRESALE-NOT-STARTED (err u7001))
 (define-constant ERR-PRESALE-NOT-ENDED (err u7002))
 (define-constant ERR-NOT-PARTICIPANT (err u7003))
+(define-constant ERR-ALREADY-CLAIMED (err u7004))
 (define-constant ERR-POOL-NOT-FUNDED (err u8000))
 (define-constant ERR-MAX-DEPOSIT-EXCEEDED (err u8001))
 (define-constant ERR-HARDCAP-EXCEEDED (err u8002))
-(define-constant ERR-ALREADY-CLAIMED (err u9002))
-(define-constant ERR-BELOW-MIN-PERIOD (err u9000))
+(define-constant ERR-MIN-TARGET-NOT-REACHED (err u8003))
 
 (define-constant ONE_8 u100000000)
 (define-constant ONE_6 u1000000)
@@ -27,6 +28,9 @@
 
 ;; hardcap
 (define-constant PRESALE-HARDCAP u50000000000) ;; 50K STX 
+
+;; softcap
+(define-constant PRESALE-SOFTCAP u25000000000) ;; 25K STX
 
 (define-data-var stx-pool uint u0)
 (define-data-var min-stx-deposit uint u20000000) ;; 20 STX
@@ -181,11 +185,14 @@
     (asserts! (< (var-get release-block) block-height) ERR-PRESALE-NOT-ENDED)
     (let
       (
+        (stx-pool-balance (var-get stx-pool))
         (sender tx-sender)
         (exists (is-some (map-get? users-deposits {user-addr: sender})))
         (user-allocation (calculate-allocation sender))
         (claimed (check-if-claimed sender))
       )
+
+      (asserts! (>= stx-pool-balance PRESALE-SOFTCAP) ERR-MIN-TARGET-NOT-REACHED)
 
       (asserts! exists ERR-NOT-PARTICIPANT)
       (asserts! (not claimed) ERR-ALREADY-CLAIMED)
