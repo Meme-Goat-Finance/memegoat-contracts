@@ -10,6 +10,7 @@
 (define-constant ERR-NOT-PARTICIPANT (err u7003))
 (define-constant ERR-POOL-NOT-FUNDED (err u8000))
 (define-constant ERR-MAX-DEPOSIT-EXCEEDED (err u8001))
+(define-constant ERR-HARDCAP-EXCEEDED (err u8002))
 (define-constant ERR-ALREADY-CLAIMED (err u9002))
 (define-constant ERR-BELOW-MIN-PERIOD (err u9000))
 
@@ -22,7 +23,10 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; amount allocated for presale
-(define-constant MEMEGOAT-POOL u1350000000000000)
+(define-constant MEMEGOAT-POOL u1350000000000000) ;; 1.35 Biliion Memegoat
+
+;; hardcap
+(define-constant PRESALE-HARDCAP u50000000000) ;; 50K STX 
 
 (define-data-var stx-pool uint u0)
 (define-data-var min-stx-deposit uint u20000000) ;; 20 STX
@@ -129,25 +133,28 @@
         (participants (var-get no-of-participants))
       )
 
-    ;; check that user has not exceeded max deposit
-    (asserts! (<= (+ user-deposit amount) (var-get max-stx-deposit)) ERR-MAX-DEPOSIT-EXCEEDED)
-  
-    ;; transfer stx to vault
-    (try! (stx-transfer? amount tx-sender .memegoat-vault))
+      ;; check that hardcap has not been reached
+      (asserts! (<= (+ amount stx-pool-balance) PRESALE-HARDCAP) ERR-HARDCAP-EXCEEDED)
 
-    ;; increment pool balance
-    (var-set stx-pool (+ stx-pool-balance amount))
+      ;; check that user has not exceeded max deposit
+      (asserts! (<= (+ user-deposit amount) (var-get max-stx-deposit)) ERR-MAX-DEPOSIT-EXCEEDED)
+    
+      ;; transfer stx to vault
+      (try! (stx-transfer? amount tx-sender .memegoat-vault))
 
-    ;; update user deposits
-    (map-set users-deposits {user-addr:tx-sender} (+ user-deposit amount))
+      ;; increment pool balance
+      (var-set stx-pool (+ stx-pool-balance amount))
 
-    ;; update no of participants
-    (if exists
-      (var-set no-of-participants participants)
-      (var-set no-of-participants (+ participants u1))
+      ;; update user deposits
+      (map-set users-deposits {user-addr:tx-sender} (+ user-deposit amount))
+
+      ;; update no of participants
+      (if exists
+        (var-set no-of-participants participants)
+        (var-set no-of-participants (+ participants u1))
+      )
     )
-  )
-  (ok (get-user-deposits tx-sender))
+    (ok (get-user-deposits tx-sender))
   )
 )
 
