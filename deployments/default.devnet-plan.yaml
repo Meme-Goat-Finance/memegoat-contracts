@@ -61,10 +61,10 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: memegoat
+            contract-name: memegoatstx
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 56490
-            path: contracts/test-contracts/token/memegoat.clar
+            cost: 56820
+            path: contracts/test-contracts/token/memegoatstx.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
@@ -75,23 +75,30 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: memegoat-faucet
+            contract-name: memegoat-faucet-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 13420
+            cost: 13480
             path: contracts/test-contracts/faucet.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: memegoat-vault
+            contract-name: memegoat-vault-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 37370
+            cost: 34730
             path: contracts/vault.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: memegoat-locker
+            contract-name: memegoat-launchpad-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 165520
+            cost: 63320
+            path: contracts/launchpad.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-locker-v1
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 165670
             path: contracts/test-contracts/test-locker.clar
             anchor-block-only: true
             clarity-version: 2

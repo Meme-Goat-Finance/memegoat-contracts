@@ -11,7 +11,7 @@
 
 (define-public (get-meme-goat-balance)
   (begin 
-    (contract-call? .memegoat get-balance-fixed (as-contract tx-sender))
+    (contract-call? .memegoatstx get-balance-fixed (as-contract tx-sender))
   )
 )
 
@@ -41,7 +41,7 @@
 
 (define-private (transfer-meme-goat (amount uint) (recipient principal))
   (begin     
-    (as-contract (contract-call? .memegoat transfer-fixed amount tx-sender recipient none))
+    (as-contract (contract-call? .memegoatstx transfer-fixed amount tx-sender recipient none))
   )
 )
 

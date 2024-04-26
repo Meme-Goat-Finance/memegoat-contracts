@@ -194,7 +194,7 @@
 
       (if fee-in-stx
         ;; Pay fee in STX
-        (try! (stx-transfer? stxfee tx-sender .memegoat-vault))
+        (try! (stx-transfer? stxfee tx-sender .memegoat-vault-v1))
         ;; Burn token
         (begin
           (asserts! (is-eq (var-get secondary-fee-token) (contract-of secondary-token-trait)) ERR-INVALID-TOKEN)
@@ -203,7 +203,7 @@
       )
 
       ;; transfer token to vault
-      (try! (contract-call? .token-amm-swap-pool-v1-1 transfer-fixed pool-id amount sender .memegoat-vault))
+      (try! (contract-call? .token-amm-swap-pool-v1-1 transfer-fixed pool-id amount sender .memegoat-vault-v1))
       
       ;; create token lock record
       (map-set token-lock-map {lock-id: next-lock-id} { lock-block: block-height, amount: amount, initial-amount: amount, unlock-block: unlock-block, lock-owner: sender , pool-id: pool-id, withdrawer: withdrawer})
@@ -285,7 +285,7 @@
       (asserts! (is-some (index-of (get-user-token-locks sender pool-id) lock-id)) ERR-OUT-OF-BOUNDS)
 
       ;; transfer token from vault
-      (as-contract (try! (contract-call? .memegoat-vault withdraw-liquidity-token pool-id amount withdrawer))) 
+      (as-contract (try! (contract-call? .memegoat-vault-v1 withdraw-liquidity-token pool-id amount withdrawer))) 
 
       (map-set token-lock-map { lock-id: lock-id} token-lock-updated)
     )
@@ -326,7 +326,7 @@
       (asserts! (is-some (index-of (get-user-token-locks sender pool-id) lock-id)) ERR-OUT-OF-BOUNDS)
 
       ;; transfer token to vault
-      (try! (contract-call? .token-amm-swap-pool-v1-1 transfer-fixed pool-id amount sender .memegoat-vault))
+      (try! (contract-call? .token-amm-swap-pool-v1-1 transfer-fixed pool-id amount sender .memegoat-vault-v1))
 
       (map-set token-lock-map { lock-id: lock-id} token-lock-updated)
     )

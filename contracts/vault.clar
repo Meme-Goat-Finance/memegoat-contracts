@@ -7,7 +7,7 @@
 (define-constant ERR-PAUSED (err u1001))
 (define-constant ERR-INVALID-BALANCE (err u1002))
 (define-constant ERR-INVALID-TOKEN (err u2026))
-(define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
+
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -30,6 +30,12 @@
   (begin 
     (try! (check-is-approved-token (contract-of the-token))) 
     (contract-call? the-token get-balance-fixed (as-contract tx-sender))
+  )
+)
+
+(define-public (stx-balance)
+  (begin 
+    (ok (stx-get-balance (as-contract tx-sender)))
   )
 )
 
@@ -86,6 +92,14 @@
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of the-token)))) ERR-NOT-AUTHORIZED) 
     (as-contract (contract-call? the-token transfer-fixed token-id amount tx-sender recipient))
+  )
+)
+
+(define-public (transfer-stx (amount uint) (recipient principal))
+  (begin     
+    (asserts! (not (is-paused)) ERR-PAUSED)
+    (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+    (stx-transfer? amount (as-contract tx-sender) recipient)
   )
 )
 

@@ -33,12 +33,16 @@
 (define-constant PRESALE-SOFTCAP u25000000000) ;; 25K STX
 
 (define-data-var stx-pool uint u0)
-(define-data-var min-stx-deposit uint u20000000) ;; 20 STX
-(define-data-var max-stx-deposit uint u200000000) ;; 200 STX
+
+;; check for testnet
+(define-data-var min-stx-deposit uint u200000000) ;; 200 STX
+(define-data-var max-stx-deposit uint u5000000000) ;; 5000 STX
+
 (define-data-var presale-started bool false)
 (define-data-var no-of-participants uint u0)
 (define-data-var duration uint u0)
 (define-data-var release-block uint u0)
+(define-data-var vault-funded bool false)
 
 (define-map users-deposits
     { user-addr: principal }
@@ -68,22 +72,24 @@
   )
 )
 
-(define-public (start-presale)
+(define-public (fund-memegoat-launchpad)
   (begin
     (try! (check-is-owner))
-    (asserts! (is-eq MEMEGOAT-POOL (try! (contract-call? .memegoat-vault get-balance .memegoatstx))) ERR-POOL-NOT-FUNDED)
-    (var-set presale-started true)
-    (ok (var-set release-block (+ (var-get duration) block-height)))
+    (asserts! (not (var-get presale-started)) ERR-PRESALE-STARTED)
+    (try! (contract-call? .memegoatstx transfer-fixed (decimals-to-fixed MEMEGOAT-POOL) tx-sender .memegoat-vault-v1 none))
+    (var-set vault-funded true)
+    (ok true)
   )
 )
 
-(define-public (fund-memegoat-launchpad (amount uint))
+(define-public (start-presale)
   (begin
     (try! (check-is-owner))
-    (asserts! (is-eq amount MEMEGOAT-POOL) ERR-INSUFFICIENT-AMOUNT)
-    (asserts! (not (var-get presale-started)) ERR-PRESALE-STARTED)
-    (try! (contract-call? .memegoatstx transfer-fixed (decimals-to-fixed amount) tx-sender .memegoat-vault none))
-    (ok true)
+    (asserts! (>= (var-get duration) u144) ERR-BELOW-MIN-PERIOD)
+    ;; (asserts! (is-eq MEMEGOAT-POOL (try! (contract-call? .memegoat-vault-v1 get-balance .memegoatstx))) ERR-POOL-NOT-FUNDED)
+    (asserts! (var-get vault-funded) ERR-POOL-NOT-FUNDED)
+    (var-set presale-started true)
+    (ok (var-set release-block (+ (var-get duration) block-height)))
   )
 )
 
@@ -91,6 +97,17 @@
 
 (define-read-only (get-user-deposits (user-addr principal)) 
   (default-to u0 (map-get? users-deposits {user-addr: user-addr}))
+)
+
+(define-read-only (calculate-allocation (user-addr principal))
+  (let
+    ((user-deposit (get-user-deposits user-addr)))
+    (* (get-stx-quote) user-deposit) 
+  )
+)
+
+(define-read-only (check-if-claimed (user-addr principal)) 
+  (default-to false (map-get? user-claimed { user-addr: user-addr }))
 )
 
 (define-read-only (get-contract-owner)
@@ -125,27 +142,18 @@
   (ok (var-get release-block))
 )
 
+(define-read-only (get-duration)
+  (ok (var-get duration))
+)
+
 ;; PRIVATE CALLS
 
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
-(define-private (calculate-allocation (user-addr principal))
-  (let
-    (
-      (user-deposit (get-user-deposits user-addr))
-    )
-    (* (get-stx-quote) user-deposit) 
-  )
-)
-
 (define-private (decimals-to-fixed (amount uint)) 
   (/ (* amount ONE_8) ONE_6)
-)
-
-(define-private (check-if-claimed (user-addr principal)) 
-  (default-to false (map-get? user-claimed { user-addr: user-addr }))
 )
 
 ;; depositStx
@@ -168,7 +176,7 @@
       (asserts! (<= (+ user-deposit amount) (var-get max-stx-deposit)) ERR-MAX-DEPOSIT-EXCEEDED)
     
       ;; transfer stx to vault
-      (try! (stx-transfer? amount tx-sender .memegoat-vault))
+      (try! (stx-transfer? amount tx-sender .memegoat-vault-v1))
 
       ;; increment pool balance
       (var-set stx-pool (+ stx-pool-balance amount))
@@ -206,7 +214,7 @@
       (asserts! (not claimed) ERR-ALREADY-CLAIMED)
           
       ;; transfer token from vault
-      (as-contract (try! (contract-call? .memegoat-vault transfer-ft .memegoatstx (decimals-to-fixed user-allocation) sender)))      
+      (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft .memegoatstx (decimals-to-fixed user-allocation) sender)))      
       
       ;; set user status to claimed 
       (map-set user-claimed { user-addr: sender } true)

@@ -1,6 +1,6 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
-(define-fungible-token memegoat)
+(define-fungible-token memegoatstx)
 
 (define-data-var token-uri (string-utf8 256) u"ipfs://ipfs/bafybeiha6ubrgfvmbd77j6jbmtkpxqhbosvalam2ud3zgnu4vydfw4d5be")
 (define-data-var contract-owner principal tx-sender)
@@ -53,13 +53,13 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply memegoat))
+  (ok (ft-get-supply memegoatstx))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "memegoat")
+  (ok "memegoatstx")
 )
 
 ;; @desc get-symbol
@@ -78,7 +78,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance memegoat account))
+  (ok (ft-get-balance memegoatstx account))
 )
 
 ;; @desc set-token-uri
@@ -109,7 +109,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? memegoat amount sender recipient)
+    (match (ft-transfer? memegoatstx amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -128,8 +128,8 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (asserts! (< (ft-get-supply memegoat) max-supply) ERR-MAX-SUPPLY)
-    (ft-mint? memegoat amount recipient)
+    (asserts! (< (ft-get-supply memegoatstx) max-supply) ERR-MAX-SUPPLY)
+    (ft-mint? memegoatstx amount recipient)
   )
 )
 
@@ -141,7 +141,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (ft-burn? memegoat amount sender)
+    (ft-burn? memegoatstx amount sender)
   )
 )
 
@@ -171,7 +171,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply memegoat)))
+  (ok (decimals-to-fixed (ft-get-supply memegoatstx)))
 )
 
 ;; @desc get-balance-fixed
@@ -179,7 +179,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance memegoat account)))
+  (ok (decimals-to-fixed (ft-get-balance memegoatstx account)))
 )
 
 ;; @desc transfer-fixed
@@ -214,5 +214,5 @@
 ;; Mint Supply 10B
 ;; --------------------------------------------------------- 
 (begin
-  (try! (ft-mint? memegoat max-supply .memegoat-faucet)) 
+  (try! (ft-mint? memegoatstx max-supply contract-creator)) 
 )
