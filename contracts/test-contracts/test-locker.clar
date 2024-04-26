@@ -28,6 +28,15 @@
     (list 200 uint) 
 )
 
+;; maps user pool ids
+(define-map users-pool-map 
+  { user-addr: principal }
+  (list 200 uint)
+)
+
+;;
+(define-map user-pool-exists { user-addr: principal, pool-id: uint } bool)
+
 ;; maps pool id of token pairs to tokenlocks
 (define-map token-lock-map
     { lock-id: uint }
@@ -74,6 +83,10 @@
   (ok (unwrap! (map-get? token-lock-map {lock-id: lock-id}) ERR-INVALID-LOCK))
 )
 
+(define-read-only (get-user-pool-ids (user-addr principal)) 
+  (default-to (list) (map-get? users-pool-map {user-addr: user-addr}))
+)
+
 ;; private calls
 
 (define-private (check-is-owner)
@@ -116,12 +129,39 @@
     (let (
           (lock-ids (get-user-token-locks user-addr pool-id))
           (length (len lock-ids))
-          (last-item (unwrap! (element-at lock-ids (- length u1)) ERR-OUT-OF-BOUNDS))
-          (item-to-remove (unwrap! (element-at lock-ids index) ERR-OUT-OF-BOUNDS))
+          (last-item (unwrap! (element-at? lock-ids (- length u1)) ERR-OUT-OF-BOUNDS))
+          (item-to-remove (unwrap! (element-at? lock-ids index) ERR-OUT-OF-BOUNDS))
           (updated-lists-v1 (unwrap! (replace-at? lock-ids (- length u1) item-to-remove) ERR-OUT-OF-BOUNDS)) 
           (updated-lists-v2 (unwrap! (replace-at? updated-lists-v1 index last-item) ERR-OUT-OF-BOUNDS)) 
         )
         (map-set users-token-locks {user-addr: user-addr, pool-id: pool-id} (unwrap! (as-max-len? (unwrap-panic (slice? updated-lists-v2 u0 (- length u1))) u200) ERR-FAILED))
+    )
+    (ok true)
+  )
+)
+
+(define-private (add-pool-id (pool-id uint) (user-addr principal))
+  (begin
+    (if (is-none (index-of (get-user-pool-ids user-addr) pool-id))
+      (map-set users-pool-map {user-addr: user-addr} (unwrap! (as-max-len? (append (get-user-pool-ids user-addr) pool-id) u200) ERR-FAILED))
+      (map-set user-pool-exists {user-addr: user-addr, pool-id: pool-id} true)
+    )
+    (ok true)
+  )
+)
+
+(define-private (remove-pool-id (pool-id uint) (user-addr principal))
+  (begin
+    (let (
+          (index (unwrap! (index-of? (get-user-pool-ids user-addr) pool-id) ERR-OUT-OF-BOUNDS))
+          (pool-ids (get-user-pool-ids user-addr))
+          (length (len pool-ids))
+          (last-item (unwrap! (element-at? pool-ids (- length u1)) ERR-OUT-OF-BOUNDS))
+          (item-to-remove (unwrap! (element-at? pool-ids index) ERR-OUT-OF-BOUNDS))
+          (updated-lists-v1 (unwrap! (replace-at? pool-ids (- length u1) item-to-remove) ERR-OUT-OF-BOUNDS)) 
+          (updated-lists-v2 (unwrap! (replace-at? updated-lists-v1 index last-item) ERR-OUT-OF-BOUNDS)) 
+        )
+        (map-set users-pool-map {user-addr: user-addr} (unwrap! (as-max-len? (unwrap-panic (slice? updated-lists-v2 u0 (- length u1))) u200) ERR-FAILED))
     )
     (ok true)
   )
@@ -170,6 +210,9 @@
 
       ;; add lock id
       (try! (add-lock-id next-lock-id pool-id sender))
+
+      ;; add pool id
+      (try! (add-pool-id pool-id sender))
 
       ;; update lock nonce
       (var-set lock-nonce next-lock-id)
@@ -368,6 +411,9 @@
 
       ;; add lock id
       (try! (add-lock-id lock-id pool-id new-owner))
+      
+      ;; add pool id
+      (try! (add-pool-id pool-id new-owner))
 
       (try! (remove-lock-id index lock-id pool-id sender))
     )

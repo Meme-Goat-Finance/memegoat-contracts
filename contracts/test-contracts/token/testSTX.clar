@@ -2,14 +2,16 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token dummy)
+(define-fungible-token testSTX)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
+(define-constant max-supply u5000000000000000) ;; max supply of 5 billion
 (define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-MAX-SUPPLY (err u8000))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -52,19 +54,19 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply dummy))
+  (ok (ft-get-supply testSTX))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "dummy")
+  (ok "testSTX")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "dummy")
+  (ok "testSTX")
 )
 
 ;; @desc get-decimals
@@ -77,7 +79,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance dummy account))
+  (ok (ft-get-balance testSTX account))
 )
 
 ;; @desc set-token-uri
@@ -108,7 +110,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? dummy amount sender recipient)
+    (match (ft-transfer? testSTX amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -127,7 +129,8 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? dummy amount recipient)
+    (asserts! (< (ft-get-supply testSTX) max-supply) ERR-MAX-SUPPLY)
+    (ft-mint? testSTX amount recipient)
   )
 )
 
@@ -140,7 +143,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? dummy amount sender)
+    (ft-burn? testSTX amount sender)
   )
 )
 
@@ -170,7 +173,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply dummy)))
+  (ok (decimals-to-fixed (ft-get-supply testSTX)))
 )
 
 ;; @desc get-balance-fixed
@@ -178,7 +181,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance dummy account)))
+  (ok (decimals-to-fixed (ft-get-balance testSTX account)))
 )
 
 ;; @desc transfer-fixed
@@ -207,4 +210,11 @@
 ;; @returns (response boolean)
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
+)
+
+;; ---------------------------------------------------------
+;; Mint Supply 10B
+;; --------------------------------------------------------- 
+(begin
+  (try! (ft-mint? testSTX max-supply .memegoat-faucet)) 
 )

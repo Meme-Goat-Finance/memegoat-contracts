@@ -61,10 +61,24 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: dummy
+            contract-name: memegoat
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 51770
-            path: contracts/test-contracts/token/dummy.clar
+            cost: 56490
+            path: contracts/test-contracts/token/memegoat.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: testSTX
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 55940
+            path: contracts/test-contracts/token/testSTX.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-faucet
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 13420
+            path: contracts/test-contracts/faucet.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
@@ -75,17 +89,10 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: goatmeme-locker
+            contract-name: memegoat-locker
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 150360
+            cost: 165520
             path: contracts/test-contracts/test-locker.clar
-            anchor-block-only: true
-            clarity-version: 2
-        - contract-publish:
-            contract-name: memegoat
-            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 51780
-            path: contracts/test-contracts/token/memegoat.clar
             anchor-block-only: true
             clarity-version: 2
       epoch: "2.4"

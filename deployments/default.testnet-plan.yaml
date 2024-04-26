@@ -1,0 +1,67 @@
+---
+id: 0
+name: Testnet deployment
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: alex-vault-v1-1
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14680452
+            path: contracts/test-contracts/alex-vault-v1-1.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: token-amm-swap-pool-v1-1
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14711772
+            path: contracts/test-contracts/token-amm-swap-pool-v1-1.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: amm-swap-pool-v1-1
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14862114
+            path: contracts/test-contracts/amm-swap-pool-v1-1.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14676872
+            path: contracts/test-contracts/token/memegoat.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: testSTX
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14675984
+            path: contracts/test-contracts/token/testSTX.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-faucet
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14658080
+            path: contracts/test-contracts/faucet.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-vault
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14667925
+            path: contracts/vault.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-locker
+            expected-sender: ST2F4QC563WN0A0949WPH5W1YXVC4M1R46PVV4TQ4
+            cost: 14723412
+            path: contracts/test-contracts/test-locker.clar
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.4"

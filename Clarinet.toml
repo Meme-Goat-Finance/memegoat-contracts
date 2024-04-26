@@ -31,6 +31,12 @@ clarity_version = 2
 epoch = 2.4
 
 # Test contracts
+[contracts.memegoat-faucet]
+path = 'contracts/test-contracts/faucet.clar'
+depends_on = [ "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
 [contracts.amm-swap-pool-v1-1]
 path = 'contracts/test-contracts/amm-swap-pool-v1-1.clar'
 depends_on = [ "trait-sip-010" ]
@@ -55,8 +61,8 @@ depends_on = [ "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
-[contracts.dummy]
-path = 'contracts/test-contracts/token/dummy.clar'
+[contracts.testSTX]
+path = 'contracts/test-contracts/token/testSTX.clar'
 depends_on = [ "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4

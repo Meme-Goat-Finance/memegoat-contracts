@@ -1,15 +1,16 @@
-(impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
-
 
 (define-fungible-token memegoat)
 
-(define-data-var token-uri (string-utf8 256) u"")
+(define-data-var token-uri (string-utf8 256) u"ipfs://ipfs/bafybeiha6ubrgfvmbd77j6jbmtkpxqhbosvalam2ud3zgnu4vydfw4d5be")
 (define-data-var contract-owner principal tx-sender)
+(define-constant contract-creator tx-sender)
+(define-constant max-supply u5000000000000000) ;; max supply of 5 billion
 (define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-MAX-SUPPLY (err u8000))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -64,7 +65,7 @@
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "memegoat")
+  (ok "GOATSTX")
 )
 
 ;; @desc get-decimals
@@ -127,6 +128,7 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
+    (asserts! (< (ft-get-supply memegoat) max-supply) ERR-MAX-SUPPLY)
     (ft-mint? memegoat amount recipient)
   )
 )
@@ -206,4 +208,11 @@
 ;; @returns (response boolean)
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
+)
+
+;; ---------------------------------------------------------
+;; Mint Supply 10B
+;; --------------------------------------------------------- 
+(begin
+  (try! (ft-mint? memegoat max-supply .memegoat-faucet)) 
 )
