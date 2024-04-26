@@ -35,8 +35,8 @@
 (define-data-var stx-pool uint u0)
 
 ;; check for testnet
-(define-data-var min-stx-deposit uint u200000000) ;; 200 STX
-(define-data-var max-stx-deposit uint u5000000000) ;; 5000 STX
+(define-data-var min-stx-deposit uint u20000000) ;; 20 STX
+(define-data-var max-stx-deposit uint u200000000) ;; 200 STX
 
 (define-data-var presale-started bool false)
 (define-data-var no-of-participants uint u0)
