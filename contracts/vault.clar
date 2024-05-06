@@ -1,4 +1,5 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 (define-constant ONE_8 u100000000) ;; 8 decimal places
@@ -7,7 +8,6 @@
 (define-constant ERR-PAUSED (err u1001))
 (define-constant ERR-INVALID-BALANCE (err u1002))
 (define-constant ERR-INVALID-TOKEN (err u2026))
-
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -71,7 +71,7 @@
 
 ;; priviliged calls
 
-(define-public (withdraw-liquidity-token (pool-id uint) (amount uint) (recipient principal))
+(define-public (transfer-liquidity-token (pool-id uint) (amount uint) (recipient principal))
   (begin     
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
@@ -99,7 +99,7 @@
   (begin     
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-    (stx-transfer? amount (as-contract tx-sender) recipient)
+    (as-contract (stx-transfer? amount tx-sender recipient))
   )
 )
 
@@ -115,20 +115,4 @@
 
 (define-private (check-is-approved-token (flash-loan-token principal))
   (ok (asserts! (default-to false (map-get? approved-tokens flash-loan-token)) ERR-NOT-AUTHORIZED))
-)
-
-(define-private (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
-)
-
-(define-private (mul-up (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-       )
-        (if (is-eq product u0)
-            u0
-            (+ u1 (/ (- product u1) ONE_8))
-       )
-   )
 )

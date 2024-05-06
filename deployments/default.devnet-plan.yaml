@@ -61,6 +61,13 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
+            contract-name: memegoat-vault-v1
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 35770
+            path: contracts/vault.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
             contract-name: memegoatstx
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
             cost: 56820
@@ -68,38 +75,17 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: testSTX
-            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 55940
-            path: contracts/test-contracts/token/testSTX.clar
-            anchor-block-only: true
-            clarity-version: 2
-        - contract-publish:
-            contract-name: memegoat-faucet-v1
-            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 13480
-            path: contracts/test-contracts/faucet.clar
-            anchor-block-only: true
-            clarity-version: 2
-        - contract-publish:
-            contract-name: memegoat-vault-v1
-            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 34730
-            path: contracts/vault.clar
-            anchor-block-only: true
-            clarity-version: 2
-        - contract-publish:
             contract-name: memegoat-launchpad-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 63320
+            cost: 64530
             path: contracts/launchpad.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
-            contract-name: memegoat-locker-v1
+            contract-name: testSTX
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 165670
-            path: contracts/test-contracts/test-locker.clar
+            cost: 55940
+            path: contracts/test-contracts/token/testSTX.clar
             anchor-block-only: true
             clarity-version: 2
       epoch: "2.4"

@@ -285,7 +285,7 @@
       (asserts! (is-some (index-of (get-user-token-locks sender pool-id) lock-id)) ERR-OUT-OF-BOUNDS)
 
       ;; transfer token from vault
-      (as-contract (try! (contract-call? .memegoat-vault-v1 withdraw-liquidity-token pool-id amount withdrawer))) 
+      (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-liquidity-token pool-id amount withdrawer))) 
 
       (map-set token-lock-map { lock-id: lock-id} token-lock-updated)
     )

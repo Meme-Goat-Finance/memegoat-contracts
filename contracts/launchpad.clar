@@ -7,9 +7,10 @@
 (define-constant ERR-BELOW-MIN-PERIOD (err u6000))
 (define-constant ERR-PRESALE-STARTED (err u7000))
 (define-constant ERR-PRESALE-NOT-STARTED (err u7001))
-(define-constant ERR-PRESALE-NOT-ENDED (err u7002))
-(define-constant ERR-NOT-PARTICIPANT (err u7003))
-(define-constant ERR-ALREADY-CLAIMED (err u7004))
+(define-constant ERR-PRESALE-ENDED (err u7002))
+(define-constant ERR-PRESALE-NOT-ENDED (err u7003))
+(define-constant ERR-NOT-PARTICIPANT (err u7004))
+(define-constant ERR-ALREADY-CLAIMED (err u7005))
 (define-constant ERR-POOL-NOT-FUNDED (err u8000))
 (define-constant ERR-MAX-DEPOSIT-EXCEEDED (err u8001))
 (define-constant ERR-HARDCAP-EXCEEDED (err u8002))
@@ -32,6 +33,7 @@
 ;; softcap
 (define-constant PRESALE-SOFTCAP u25000000000) ;; 25K STX
 
+;; stx pool
 (define-data-var stx-pool uint u0)
 
 ;; check for testnet
@@ -72,7 +74,7 @@
   )
 )
 
-(define-public (fund-memegoat-launchpad)
+(define-public (fund-launchpad)
   (begin
     (try! (check-is-owner))
     (asserts! (not (var-get presale-started)) ERR-PRESALE-STARTED)
@@ -161,6 +163,7 @@
   (begin
     (asserts! (>= amount (var-get min-stx-deposit)) ERR-INSUFFICIENT-AMOUNT)
     (asserts! (var-get presale-started) ERR-PRESALE-NOT-STARTED)
+    (asserts! (> (var-get release-block) block-height) ERR-PRESALE-ENDED)
     (let
       (
         (stx-pool-balance (var-get stx-pool))
