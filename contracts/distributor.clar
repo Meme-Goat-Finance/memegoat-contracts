@@ -1,4 +1,4 @@
-(use-trait ft-trait 'SP3K8BC0PPEVCV7NZ6QSRWPQ2JE9E5B6N3PA0KBR9.trait-sip-010.sip-010-trait)
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; ERRS
 (define-constant ERR-NOT-AUTHORIZED (err u5000))

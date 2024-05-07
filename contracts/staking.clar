@@ -103,6 +103,18 @@
   (do-calculate user-addr (get end-block (try! (get-user-staking-data user-addr))))
 )
 
+;; @desc get-total-rewards
+;; @returns (response uint)
+(define-read-only (get-total-rewards)
+  (ok (var-get total-reward))
+)
+
+;; @desc get-total-staked
+;; @returns (response uint)
+(define-read-only (get-total-staked) 
+  (ok (var-get staked-total))
+)
+
 ;; MANAGEMENT CALLS
 
 ;; @desc set-contract-owner: sets owner
@@ -138,7 +150,7 @@
     (try! (check-is-owner))
     (asserts! (> interest-rate u0) ERR-ZERO-INTEREST-RATE)
     (asserts! (> duration-in-blocks u0) ERR-ZERO-LOCK-DURATION)
-    (asserts! (is-some (get-stake-record-exists stake-index)) ERR-STAKE-RECORD-EXISTS)
+    (asserts! (is-none (get-stake-record-exists stake-index)) ERR-STAKE-RECORD-EXISTS)
     (map-set stake-rates {stake-index: stake-index} { interest-rate: interest-rate, duration-in-blocks: duration-in-blocks, block-stamp: block-height})
     (ok true)
   )
@@ -211,131 +223,144 @@
 )
 
 (define-private (do-stake (user-addr principal) (amount uint) (stake-index uint))
-  (let
-    ;; get variables
-    (
-      (has-stake (get-user-stake-has-staked user-addr))
-      (stake-record (try! (get-stake-record stake-index)))
-      (duration-in-blocks (get duration-in-blocks stake-record))
-      (participants (var-get total-participants))
-      (staked-balances (var-get staked-balance))
-      (total-staked (var-get staked-total))
-    )
+  (begin
+    (let
+      ;; get variables
+      (
+        (has-stake (get-user-stake-has-staked user-addr))
+        (stake-record (try! (get-stake-record stake-index)))
+        (duration-in-blocks (get duration-in-blocks stake-record))
+        (participants (var-get total-participants))
+        (staked-balances (var-get staked-balance))
+        (total-staked (var-get staked-total))
+      )
 
-    ;; check for stake
-    (if has-stake
-      (let
-        ;; calculate rewards and update stake data
-        (
-          (user-stake (try! (get-user-staking-data user-addr)))
-          (deposit-amount (get deposit-amount user-stake))
-          (stake-rewards (get lock-rewards user-stake))
-          (end-block (get end-block user-stake))
-          (new-rewards (+ (try! (do-calculate user-addr block-height)) stake-rewards))
-          (user-stake-updated (merge user-stake {
-            deposit-amount: (+ deposit-amount amount),
-            deposit-block: block-height,
-            end-block: (+ duration-in-blocks block-height),
-            lock-rewards: new-rewards
-            })
+      ;; check for stake
+      (if has-stake
+        (let
+          ;; calculate rewards and update stake data
+          (
+            (user-stake (try! (get-user-staking-data user-addr)))
+            (deposit-amount (get deposit-amount user-stake))
+            (stake-rewards (get lock-rewards user-stake))
+            (end-block (get end-block user-stake))
+            (new-rewards (+ (try! (do-calculate user-addr block-height)) stake-rewards))
+            (user-stake-updated (merge user-stake {
+              deposit-amount: (+ deposit-amount amount),
+              deposit-block: block-height,
+              end-block: (+ duration-in-blocks block-height),
+              lock-rewards: new-rewards,
+              stake-index: stake-index
+              })
+            )
           )
+          (asserts! (< block-height end-block) ERR-STAKE-LOCK-EXPIRED)
+          (map-set deposit-map {user-addr: user-addr} user-stake-updated)
         )
-        (asserts! (< block-height end-block) ERR-STAKE-LOCK-EXPIRED)
-        (map-set deposit-map {user-addr: user-addr} user-stake-updated)
-      )
-      
-      (begin
-        ;; create new stake data for user
-        (map-set has-staked { user-addr: user-addr } true)
-        (map-set deposit-map 
-          { user-addr: user-addr } 
-          {deposit-amount: amount, deposit-block: block-height, end-block: (+ block-height duration-in-blocks), lock-rewards: u0, stake-index: stake-index, paid: false }
+        
+        (begin
+          ;; create new stake data for user
+          (map-set has-staked { user-addr: user-addr } true)
+          (map-set deposit-map 
+            { user-addr: user-addr } 
+            {deposit-amount: amount, deposit-block: block-height, end-block: (+ block-height duration-in-blocks), lock-rewards: u0, stake-index: stake-index, paid: false }
+          )
+          (var-set total-participants (+ participants u1))
         )
-        (var-set total-participants (+ participants u1))
       )
+
+      ;; transfer memegoat to vault
+      (try! (contract-call? .memegoatstx transfer-fixed (decimals-to-fixed amount) user-addr .memegoat-vault-v1 none)) 
+
+      ;; update stake balances 
+      (var-set staked-balance (+ staked-balances amount))
+      (var-set staked-total (+ total-staked amount))
     )
-
-    ;; update stake balances 
-    (var-set staked-balance (+ staked-balances amount))
-    (var-set staked-total (+ total-staked amount))
-
-    ;; transfer memegoat to vault
-    (try! (contract-call? .memegoatstx transfer-fixed (decimals-to-fixed amount) user-addr .memegoat-vault-v1 none))
     (ok true)
   )
 )
 
 
 (define-private (do-withdraw-stake (user-addr principal))
-  (let
-    ;; get variables and calculate rewards
-    (
-      (participants (var-get total-participants))
-      (staked-balance_ (var-get staked-balance))
-      (user-stake (try! (get-user-staking-data user-addr)))
-      (end-block (get end-block user-stake))
-      (amount (get deposit-amount user-stake))
-      (paid (get paid user-stake))
-      (lock-rewards (get lock-rewards user-stake))
-      (rewards-to-pay (+ (try! (do-calculate user-addr end-block)) lock-rewards))
-      (reward-balance_ (var-get reward-balance))
-      (user-stake-updated (merge user-stake {
-          paid: true
-        })
+  (begin 
+    (let
+      ;; get variables and calculate rewards
+      (
+        (participants (var-get total-participants))
+        (staked-balance_ (var-get staked-balance))
+        (user-stake (try! (get-user-staking-data user-addr)))
+        (end-block (get end-block user-stake))
+        (deposit-amount (get deposit-amount user-stake))
+        (paid (get paid user-stake))
+        (lock-rewards (get lock-rewards user-stake))
+        (stake-rewards (try! (do-calculate user-addr end-block)))
+        (total-rewards (+ stake-rewards lock-rewards))
+        (amount-to-pay (+ deposit-amount total-rewards))
+        (reward-balance_ (var-get reward-balance))
+        (user-stake-updated (merge user-stake {
+            paid: true,
+            deposit-amount: u0,
+            lock-rewards: u0,
+          })
+        )
       )
+
+      ;; run checks 
+      (asserts! (> block-height end-block) ERR-STAKE-LOCK-NOT-EXPIRED)
+      (asserts! (not paid) ERR-STAKE-LOCK-PAID-OUT)
+      (asserts! (< total-rewards reward-balance_ ) ERR-INSUFFICIENT-REWARD-BALANCE)
+
+      ;; transfer token from vault
+      (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft .memegoatstx (decimals-to-fixed amount-to-pay) user-addr)))   
+
+      ;; update balances and decrement participant
+      (var-set staked-balance (- staked-balance_ deposit-amount))
+      (var-set reward-balance (- reward-balance_ total-rewards))
+      (var-set total-participants (- participants u1))
+
+      ;; update user records
+      (map-set has-staked {user-addr: user-addr} false)
+      (map-set deposit-map {user-addr: user-addr} user-stake-updated)
+   
     )
-
-    ;; run checks 
-    (asserts! (> block-height end-block) ERR-STAKE-LOCK-NOT-EXPIRED)
-    (asserts! (not paid) ERR-STAKE-LOCK-PAID-OUT)
-    (asserts! (< rewards-to-pay reward-balance_ ) ERR-INSUFFICIENT-REWARD-BALANCE)
-
-    ;; update balances and decrement participant
-    (var-set staked-balance (- staked-balance_ amount))
-    (var-set reward-balance (- reward-balance_ rewards-to-pay))
-    (var-set total-participants (- participants u1))
-
-    ;; update user records
-    (map-set has-staked {user-addr: user-addr} false)
-    (map-set deposit-map {user-addr: user-addr} user-stake-updated)
-
-    ;; transfer token from vault
-    (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft .memegoatstx (decimals-to-fixed (+ amount rewards-to-pay)) user-addr)))      
     (ok true)
   )
 )
 
 (define-private (do-emergency-withdraw (user-addr principal))
-  (let
-    ;; get variables
-    (
-      (participants (var-get total-participants))
-      (staked-balance_ (var-get staked-balance))
-      (user-stake (try! (get-user-staking-data user-addr)))
-      (end-block (get end-block user-stake))
-      (amount (get deposit-amount user-stake))
-      (paid (get paid user-stake))
-      (lock-rewards (get lock-rewards user-stake))
-      (user-stake-updated (merge user-stake {
-          paid: true
-        })
+  (begin
+    (let
+      ;; get variables
+      (
+        (participants (var-get total-participants))
+        (staked-balance_ (var-get staked-balance))
+        (user-stake (try! (get-user-staking-data user-addr)))
+        (end-block (get end-block user-stake))
+        (amount (get deposit-amount user-stake))
+        (paid (get paid user-stake))
+        (user-stake-updated (merge user-stake {
+            paid: true,
+            deposit-amount: u0,
+            lock-rewards: u0,
+          })
+        )
       )
+
+      ;; run checks
+      (asserts! (> block-height end-block) ERR-STAKE-LOCK-NOT-EXPIRED)
+      (asserts! (not paid) ERR-STAKE-LOCK-PAID-OUT)
+
+      ;; transfer token from vault
+      (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft .memegoatstx (decimals-to-fixed amount) user-addr)))  
+
+      ;; update balances
+      (var-set staked-balance (- staked-balance_ amount))
+      (var-set total-participants (- participants u1))
+
+      ;; update user records
+      (map-set has-staked {user-addr: user-addr} false)
+      (map-set deposit-map {user-addr: user-addr} user-stake-updated)
     )
-
-    ;; run checks
-    (asserts! (> block-height end-block) ERR-STAKE-LOCK-NOT-EXPIRED)
-    (asserts! (not paid) ERR-STAKE-LOCK-PAID-OUT)
-
-    ;; update balances
-    (var-set staked-balance (- staked-balance_ amount))
-    (var-set total-participants (- participants u1))
-
-    ;; update user records
-    (map-set has-staked {user-addr: user-addr} false)
-    (map-set deposit-map {user-addr: user-addr} user-stake-updated)
-
-    ;; transfer token from vault
-    (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft .memegoatstx (decimals-to-fixed amount) user-addr)))      
     (ok true)
   )
 )

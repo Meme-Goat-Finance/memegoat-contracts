@@ -75,10 +75,31 @@ plan:
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
+            contract-name: memegoat-distributor-v2
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 20590
+            path: contracts/distributor.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
             contract-name: memegoat-launchpad-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
             cost: 64530
             path: contracts/launchpad.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-launchpad-ext-v1
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 21020
+            path: contracts/launchpad-ext.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: memegoat-staking-v1
+            expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            cost: 127410
+            path: contracts/staking.clar
             anchor-block-only: true
             clarity-version: 2
         - contract-publish:
