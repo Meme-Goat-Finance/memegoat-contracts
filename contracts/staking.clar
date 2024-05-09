@@ -5,6 +5,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-PAUSED (err u1001))
+(define-constant ERR-BELOW-MIN-STAKE (err u1002))
 (define-constant ERR-ZERO-INTEREST-RATE (err u2000))
 (define-constant ERR-ZERO-LOCK-DURATION (err u2001))
 (define-constant ERR-ZERO-AMOUNT (err u2002))
@@ -15,6 +16,7 @@
 (define-constant ERR-STAKE-LOCK-EXPIRED (err u3003))
 (define-constant ERR-STAKE-LOCK-NOT-EXPIRED (err u3004))
 (define-constant ERR-STAKE-LOCK-PAID-OUT (err u3005))
+(define-constant ERR-STAKE-SWITCH-NOT-ALLOWED (err u3006))
 
 ;; DATA MAPS AND VARS
 
@@ -26,6 +28,7 @@
 (define-data-var total-participants uint u0)
 (define-data-var lock-duration uint u0)
 (define-data-var paused bool false)
+(define-data-var minimum-stake uint u200000000000)
 
 ;; @desc map to store user staking data
 (define-map deposit-map
@@ -115,6 +118,13 @@
   (ok (var-get staked-total))
 )
 
+;; @desc get-min-stake
+;; @returns (response uint)
+(define-read-only (get-minimum-stake)
+  (ok (var-get minimum-stake))
+)
+
+
 ;; MANAGEMENT CALLS
 
 ;; @desc set-contract-owner: sets owner
@@ -177,6 +187,20 @@
   )
 )
 
+;; @desc set-min-stake: sets min stake
+;; @requirement only callable by current owner
+;; @params amount
+;; @returns (response boolean)
+(define-public (set-min-stake (amount uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (var-set minimum-stake amount)
+    (ok true)
+  )
+)
+
+
 ;; PUBLIC CALLS
 
 ;; @desc stake: transfers amount to be staked.
@@ -184,9 +208,10 @@
 ;; @returns (response boolean)
 (define-public (stake (amount uint) (stake-index uint))
   (begin
-    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (asserts! (>= amount (var-get minimum-stake)) ERR-BELOW-MIN-STAKE)
     (asserts! (not (is-paused)) ERR-PAUSED)
-    (ok (do-stake tx-sender amount stake-index))
+    (try! (do-stake tx-sender amount stake-index))
+    (ok true)
   )
 )
 
@@ -197,7 +222,8 @@
   (begin
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (get-user-stake-has-staked tx-sender) ERR-NO-STAKE-FOUND)
-    (ok (do-withdraw-stake tx-sender))
+    (try! (do-withdraw-stake  tx-sender))
+    (ok true)
   )
 )
 
@@ -208,7 +234,8 @@
   (begin
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (get-user-stake-has-staked tx-sender) ERR-NO-STAKE-FOUND)
-    (ok (do-emergency-withdraw tx-sender))
+    (try! (do-emergency-withdraw tx-sender))
+    (ok true)
   )
 )
 
@@ -235,12 +262,15 @@
         (total-staked (var-get staked-total))
       )
 
+     
+
       ;; check for stake
       (if has-stake
         (let
           ;; calculate rewards and update stake data
           (
             (user-stake (try! (get-user-staking-data user-addr)))
+            (curr-stake-index (get stake-index user-stake))
             (deposit-amount (get deposit-amount user-stake))
             (stake-rewards (get lock-rewards user-stake))
             (end-block (get end-block user-stake))
@@ -250,10 +280,10 @@
               deposit-block: block-height,
               end-block: (+ duration-in-blocks block-height),
               lock-rewards: new-rewards,
-              stake-index: stake-index
               })
             )
           )
+          (asserts! (is-eq stake-index curr-stake-index) ERR-STAKE-SWITCH-NOT-ALLOWED)
           (asserts! (< block-height end-block) ERR-STAKE-LOCK-EXPIRED)
           (map-set deposit-map {user-addr: user-addr} user-stake-updated)
         )

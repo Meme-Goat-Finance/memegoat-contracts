@@ -98,7 +98,7 @@ plan:
         - contract-publish:
             contract-name: memegoat-staking-v1
             expected-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
-            cost: 127410
+            cost: 130860
             path: contracts/staking.clar
             anchor-block-only: true
             clarity-version: 2
