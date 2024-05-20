@@ -71,14 +71,6 @@
 
 ;; priviliged calls
 
-(define-public (transfer-liquidity-token (pool-id uint) (amount uint) (recipient principal))
-  (begin     
-    (asserts! (not (is-paused)) ERR-PAUSED)
-    (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-    (as-contract (contract-call? .token-amm-swap-pool-v1-1 transfer-fixed pool-id amount tx-sender recipient))
-  )
-)
-
 (define-public (transfer-ft (the-token <ft-trait>) (amount uint) (recipient principal))
   (begin     
     (asserts! (not (is-paused)) ERR-PAUSED)

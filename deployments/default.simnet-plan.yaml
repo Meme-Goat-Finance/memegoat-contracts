@@ -113,9 +113,24 @@ plan:
             path: contracts/launchpad-ext.clar
             clarity-version: 2
         - emulated-contract-publish:
+            contract-name: memegoat-launchpad-v1-1
+            emulated-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            path: contracts/launchpad-v1-1.clar
+            clarity-version: 2
+        - emulated-contract-publish:
+            contract-name: memegoat-liquidity-locker-v1
+            emulated-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            path: contracts/liquidity-locker.clar
+            clarity-version: 2
+        - emulated-contract-publish:
             contract-name: memegoat-staking-v1
             emulated-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
             path: contracts/staking.clar
+            clarity-version: 2
+        - emulated-contract-publish:
+            contract-name: memegoat-token-locker-v1
+            emulated-sender: STHSSNNW4X73WMDB5XZV387WME91DQCNZMEK833W
+            path: contracts/token-locker.clar
             clarity-version: 2
         - emulated-contract-publish:
             contract-name: testSTX

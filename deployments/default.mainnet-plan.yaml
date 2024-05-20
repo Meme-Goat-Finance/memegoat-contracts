@@ -9,10 +9,10 @@ plan:
     - id: 0
       transactions:
         - contract-publish:
-            contract-name: memegoat-staking-v1
+            contract-name: memegoat-staking-v1-2
             expected-sender: SP2F4QC563WN0A0949WPH5W1YXVC4M1R46QKE0G14
-            cost: 1657906
-            path: contracts/staking.clar
+            cost: 1261844
+            path: contracts/staking-v2.clar
             anchor-block-only: true
             clarity-version: 2
       epoch: "2.4"

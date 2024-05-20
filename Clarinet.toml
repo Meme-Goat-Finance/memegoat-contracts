@@ -51,6 +51,11 @@ path = 'contracts/launchpad-ext.clar'
 clarity_version = 2
 epoch = 2.4
 
+[contracts.memegoat-launchpad-v1-1]
+path = 'contracts/launchpad-v1-1.clar'
+clarity_version = 2
+epoch = 2.4
+
 [contracts.memegoat-distributor-v2]
 path = 'contracts/distributor.clar'
 clarity_version = 2
@@ -61,10 +66,15 @@ path = 'contracts/staking.clar'
 clarity_version = 2
 epoch = 2.4
 
-# [contracts.memegoat-locker-v1]
-# path = 'contracts/test-contracts/test-locker.clar'
-# clarity_version = 2
-# epoch = 2.4
+[contracts.memegoat-token-locker-v1]
+path = 'contracts/token-locker.clar'
+clarity_version = 2
+epoch = 2.4
+
+[contracts.memegoat-liquidity-locker-v1]
+path = 'contracts/liquidity-locker.clar'
+clarity_version = 2
+epoch = 2.4
 
 [contracts.memegoat-vault-v1]
 path = 'contracts/vault.clar'
