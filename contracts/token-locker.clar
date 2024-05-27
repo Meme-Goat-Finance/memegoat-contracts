@@ -68,7 +68,6 @@
     token-vested: bool,
     unvest-blocks: (optional (list 200 {height: uint, percentage: uint})),
     total-addresses: (optional uint),
-    amount-registered: (optional uint)
   }
 )
 
@@ -203,6 +202,7 @@
     (withdrawer principal)
     (is-vested-lock bool)
     (unvest-blocks (optional (list 200 {height: uint, percentage: uint})))
+    (addresses (optional (list 200 {addr: principal, amount: uint})))
   ) 
   (begin     
     (asserts! (> unlock-block block-height) ERR-INVALID-BLOCK)
@@ -236,9 +236,13 @@
           (let 
             (
               (unwrapped-unvest-blocks (unwrap! unvest-blocks ERR-VEST-PARAMS-NOT-SET))
+              (unwrapped-addresses  (unwrap! addresses ERR-VEST-PARAMS-NOT-SET))
               (total-percentage (fold sum-unvest-blocks-percentage unwrapped-unvest-blocks u0))
+              (amount-to-register (fold sum-amount-vesting-record unwrapped-addresses u0))
             )
             (asserts! (is-eq total-percentage u100) ERR-INVALID-PERCENTAGE)
+            (asserts! (is-eq amount-to-register amount) ERR-EXCEEDS-LOCKED-AMOUNT)
+            (fold store-vesting-record-iter unwrapped-addresses next-lock-id)
             (map-set token-lock-map 
               {lock-id: next-lock-id} 
               { 
@@ -250,8 +254,7 @@
                 withdrawer: withdrawer,
                 token-vested: true,
                 unvest-blocks: unvest-blocks,
-                total-addresses: (some u0),
-                amount-registered: (some u0)
+                total-addresses: (some (len unwrapped-addresses)),
               }
             )
           )
@@ -268,7 +271,6 @@
             token-vested: false,
             unvest-blocks: none,
             total-addresses: none,
-            amount-registered: none,
           }
         )
       )
@@ -278,40 +280,6 @@
       (var-set lock-nonce next-lock-id)
     )
     (ok true)  
-  )
-)
-
-(define-public (add-vesting-addresses (index uint) (addresses (list 200 {addr: principal, amount: uint})))
-  (begin
-    (let
-      (
-        (sender tx-sender)
-        (lock-id (unwrap! (element-at (get-user-token-locks sender) index) ERR-OUT-OF-BOUNDS))
-        (token-lock (unwrap! (map-get? token-lock-map { lock-id: lock-id }) ERR-INVALID-TOKEN-LOCK))
-        (token-vested (get token-vested token-lock))
-        (amount (get amount token-lock))
-        (unvest-blocks (unwrap! (get unvest-blocks token-lock) ERR-VEST-PARAMS-NOT-SET))
-        (total-addresses (unwrap! (get total-addresses token-lock) ERR-VEST-PARAMS-NOT-SET))
-        (amount-registered (unwrap! (get amount-registered token-lock) ERR-VEST-PARAMS-NOT-SET))
-        (first-unvest-block (unwrap! (element-at? unvest-blocks u0) ERR-INVALID-INDEX))
-        (height (get height first-unvest-block))
-        (amount-to-register (fold sum-amount-vesting-record addresses u0))
-        (updated-amount-registered (+ amount-registered amount-to-register ))
-        (token-lock-updated ( merge token-lock {
-            total-addresses: (some (+ total-addresses (len addresses))),
-            amount-registered: (some updated-amount-registered)
-          })
-        )
-      )
-
-      (asserts! (is-eq (get lock-owner token-lock) sender) ERR-LOCK_MISMATCH)
-      (asserts! token-vested ERR-ONLY-VESTED-LOCK)
-      (asserts! (<= updated-amount-registered amount) ERR-EXCEEDS-LOCKED-AMOUNT)
-      ;; (asserts! (> height block-height) ERR-VESTING-STARTED)
-      (fold store-vesting-record-iter addresses lock-id)
-      (map-set token-lock-map { lock-id: lock-id } token-lock-updated)
-    )
-    (ok true)
   )
 )
 
@@ -476,7 +444,6 @@
           token-vested: false,
           unvest-blocks: none,
           total-addresses: none,
-          amount-registered: none,
         }
       )
 
