@@ -1,2 +1,3 @@
-# Token-locker
-Token/Liquidity locker for stx blockchain
+# Memegoat-Contracts
+
+Memegoat Finance contracts

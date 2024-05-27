@@ -17,6 +17,7 @@
 (define-constant ERR-MAX-DEPOSIT-EXCEEDED (err u8001))
 (define-constant ERR-HARDCAP-EXCEEDED (err u8002))
 (define-constant ERR-MIN-TARGET-NOT-REACHED (err u8003))
+(define-constant ERR-TOKEN-IS-VESTED (err u8004))
 
 ;; DATA MAPS AND VARS
 
@@ -41,7 +42,8 @@
     duration: uint,
     start-block: uint,
     end-block: uint,
-    owner: principal
+    owner: principal,
+    is-vested: bool,
   }
 )
 
@@ -157,6 +159,8 @@
     (duration uint)
     (min-stx-deposit uint)
     (max-stx-deposit uint)
+    (is-vested bool)
+
   )
   (begin
 
@@ -179,7 +183,8 @@
       duration: duration,
       start-block: u0,
       end-block: u0,
-      owner: tx-sender
+      owner: tx-sender,
+      is-vested: is-vested
     })
 
     (try! (contract-call? token transfer pool-amount tx-sender .memegoat-vault-v1 none))
@@ -246,8 +251,9 @@
         (token-launch (try! (get-token-launch-by-id token-launch-id)))
         (total-stx-deposited (get total-stx-deposited token-launch))
         (softcap (get softcap token-launch))
-        (hardcap (get softcap token-launch))
+        (hardcap (get hardcap token-launch))
         (token (get token token-launch))
+        (is-vested (get is-vested token-launch))
         (end-block (get end-block token-launch))
         (exists (is-some (get-user-deposits-exists sender token-launch-id)))
         (user-allocation (calculate-allocation sender token-launch-id))
@@ -259,6 +265,7 @@
       (asserts! exists ERR-NOT-PARTICIPANT)
       (asserts! (not claimed) ERR-ALREADY-CLAIMED)
       (asserts! (is-eq token (contract-of token-trait)) ERR-INVALID-TOKEN)
+      (asserts! is-vested ERR-TOKEN-IS-VESTED)
           
       ;; transfer token from vault
       (as-contract (try! (contract-call? .memegoat-vault-v1 transfer-ft token-trait user-allocation sender)))      
